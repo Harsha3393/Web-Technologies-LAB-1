@@ -1,0 +1,201 @@
+/* Reset default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f0f4f8;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Particle background (same as before) */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: radial-gradient(circle, #1e3c72, #2a5298);
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    animation: float 15s infinite linear;
+    opacity: 0.5;
+}
+
+@keyframes float {
+    0% { transform: translateY(100vh); }  /* Start from bottom for better effect */
+    100% { transform: translateY(-100vh); }
+}
+
+/* Particle variations (same) */
+.particle:nth-child(1) { width: 10px; height: 10px; left: 10%; animation-delay: 0s; animation-duration: 20s; }
+.particle:nth-child(2) { width: 5px; height: 5px; left: 20%; animation-delay: 2s; animation-duration: 15s; }
+.particle:nth-child(3) { width: 15px; height: 15px; left: 30%; animation-delay: 4s; animation-duration: 25s; }
+.particle:nth-child(4) { width: 8px; height: 8px; left: 40%; animation-delay: 6s; animation-duration: 18s; }
+.particle:nth-child(5) { width: 12px; height: 12px; left: 50%; animation-delay: 8s; animation-duration: 22s; }
+.particle:nth-child(6) { width: 7px; height: 7px; left: 60%; animation-delay: 10s; animation-duration: 16s; }
+.particle:nth-child(7) { width: 9px; height: 9px; left: 70%; animation-delay: 12s; animation-duration: 19s; }
+.particle:nth-child(8) { width: 11px; height: 11px; left: 80%; animation-delay: 14s; animation-duration: 23s; }
+.particle:nth-child(9) { width: 6px; height: 6px; left: 90%; animation-delay: 16s; animation-duration: 17s; }
+.particle:nth-child(10) { width: 13px; height: 13px; left: 15%; animation-delay: 18s; animation-duration: 24s; }
+
+/* Header (unchanged) */
+header {
+    background-color: #2a5298;
+    color: white;
+    text-align: center;
+    padding: 60px 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+header h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+}
+
+header p {
+    font-size: 1.5em;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+/* ENHANCED GLOW FOR SECTIONS */
+section {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s ease;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+section::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    background: linear-gradient(45deg, #2a5298, #1e90ff, #00bfff, #2a5298);
+    border-radius: 17px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+section:hover::before {
+    opacity: 1;
+}
+
+section:hover {
+    transform: translateY(-10px);
+    box-shadow: 
+        0 0 30px rgba(42, 82, 152, 0.8),
+        0 0 60px rgba(42, 82, 152, 0.5),
+        0 0 90px rgba(42, 82, 152, 0.3);
+}
+
+/* Section titles */
+section h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #2a5298;
+    border-bottom: 3px solid #2a5298;
+    padding-bottom: 10px;
+    transition: color 0.4s ease;
+}
+
+section:hover h2 {
+    color: #1e3c72;
+}
+
+/* === NEW: Enhanced About Me text visibility === */
+#about p {
+    color: #1e3c72;
+    font-size: 1.15em;
+    line-height: 1.8;
+    margin-top: 15px;
+    transition: color 0.4s ease;
+}
+
+#about:hover p {
+    color: #2a5298;
+    text-shadow: 0 0 8px rgba(42, 82, 152, 0.2);
+}
+/* Skills - Enhanced glow + scale */
+#skills li {
+    background: #e0e7ff;
+    margin: 12px 0;
+    padding: 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#skills li:hover {
+    background: #c3dafe;
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 0 20px rgba(42, 82, 152, 0.6);
+}
+
+/* Projects - Stronger glow on cards */
+#projects .project {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#projects .project:hover {
+    transform: translateY(-8px);
+    box-shadow: 
+        0 0 30px rgba(42, 82, 152, 0.8),
+        0 0 50px rgba(42, 82, 152, 0.5);
+    background: #ffffff;
+}
+
+#projects h3 {
+    font-size: 1.5em;
+    color: #2a5298;
+    margin-bottom: 10px;
+}
+
+/* Footer */
+footer {
+    background-color: #2a5298;
+    color: white;
+    text-align: center;
+    padding: 25px;
+    margin-top: 50px;
+    position: relative;
+    z-index: 1;
+}
+
+footer a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+footer a:hover {
+    color: #c3dafe;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
