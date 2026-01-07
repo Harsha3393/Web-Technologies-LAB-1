@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Audio and Video</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 800px; margin: auto; }
+        h1, h2 { text-align: center; }
+        .player { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        video { width: 100%; max-height: 400px; }
+        .controls { margin-top: 10px; text-align: center; }
+        .time { font-size: 1.2em; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HTML5 Multimedia Page</h1>
+
+        <div class="player">
+            <h2>Audio Player</h2>
+            <audio id="audio" controls>
+                <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            <div class="time">Current time: <span id="audioTime">0:00</span> / <span id="audioDuration">0:00</span></div>
+        </div>
+
+        <div class="player">
+            <h2>Video Player</h2>
+            <video id="video" controls>
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                Your browser does not support the video element.
+            </video>
+            <div class="time">Current time: <span id="videoTime">0:00</span> / <span id="videoDuration">0:00</span></div>
+        </div>
+    </div>
+
+    <script>
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        const audio = document.getElementById('audio');
+        const audioTime = document.getElementById('audioTime');
+        const audioDuration = document.getElementById('audioDuration');
+
+        audio.addEventListener('loadedmetadata', () => {
+            audioDuration.textContent = formatTime(audio.duration);
+        });
+        audio.addEventListener('timeupdate', () => {
+            audioTime.textContent = formatTime(audio.currentTime);
+        });
+
+        const video = document.getElementById('video');
+        const videoTime = document.getElementById('videoTime');
+        const videoDuration = document.getElementById('videoDuration');
+
+        video.addEventListener('loadedmetadata', () => {
+            videoDuration.textContent = formatTime(video.duration);
+        });
+        video.addEventListener('timeupdate', () => {
+            videoTime.textContent = formatTime(video.currentTime);
+        });
+    </script>
+</body>
+</html>
