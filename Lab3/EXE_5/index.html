@@ -1,1 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Multi-Stage Workflow Engine</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f4f7f6;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px 20px;
+    }
 
+    .workflow-card {
+      background: white;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+      width: 100%;
+      max-width: 460px;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      margin-bottom: 32px;
+    }
+    .progress-bar {
+      background: #4caf50;
+      height: 8px;
+      border-radius: 4px;
+      width: 25%;
+      transition: width 0.4s ease;
+    }
+    .progress-bg {
+      background: #e0e0e0;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .steps-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: #666;
+      font-weight: 500;
+    }
+    .steps-labels span.active {
+      color: #4caf50;
+      font-weight: 600;
+    }
+
+    h3 {
+      margin: 0 0 20px;
+      color: #1a3c34;
+      font-size: 1.35rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0 16px;
+      border: 1px solid #d1d9e0;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    .nav-btns {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 28px;
+      gap: 12px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #prevBtn {
+      background: #9e9e9e;
+      color: white;
+    }
+    #prevBtn:hover {
+      background: #757575;
+    }
+
+    #nextBtn, #submitBtn {
+      background: #4caf50;
+      color: white;
+      flex: 1;
+    }
+    #nextBtn:hover, #submitBtn:hover {
+      background: #43a047;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .form-stage {
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+    .form-stage.active {
+      display: block;
+    }
+
+    .review-box {
+      background: #f9fafb;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.96rem;
+      line-height: 1.6;
+    }
+    .review-box p {
+      margin: 10px 0;
+    }
+    .review-box strong {
+      color: #2c3e50;
+    }
+
+    .error {
+      color: #d32f2f;
+      font-size: 0.82rem;
+      margin-top: -8px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    label[for="terms"] {
+      font-size: 0.9rem;
+      color: #444;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="workflow-card">
+  <div class="progress-container">
+    <div class="progress-bg">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="steps-labels">
+      <span>Account</span>
+      <span>Personal</span>
+      <span>Bio</span>
+      <span>Review</span>
+    </div>
+  </div>
+
+  <form id="workflowForm" novalidate>
+    <!-- Stage 1 -->
+    <div class="form-stage active" id="stage1">
+      <h3>Account Setup</h3>
+      <input type="email" id="email" placeholder="Email Address" required autocomplete="email">
+      <input type="password" id="pass" placeholder="Password (min 6 characters)" required autocomplete="new-password">
+      <div class="error" id="stage1-error"></div>
+    </div>
+
+    <!-- Stage 2 -->
+    <div class="form-stage" id="stage2">
+      <h3>Personal Details</h3>
+      <input type="text" id="fname" placeholder="First Name" required autocomplete="given-name">
+      <input type="text" id="lname" placeholder="Last Name" required autocomplete="family-name">
+      <div class="error" id="stage2-error"></div>
+    </div>
+
+    <!-- Stage 3 -->
+    <div class="form-stage" id="stage3">
+      <h3>Professional Bio</h3>
+      <textarea id="bio" placeholder="Tell us about yourself... (min 10 characters)" rows="5"></textarea>
+      <div class="error" id="stage3-error"></div>
+    </div>
+
+    <!-- Stage 4 -->
+    <div class="form-stage" id="stage4">
+      <h3>Review & Submit</h3>
+      <div id="reviewData" class="review-box"></div>
+      <label>
+        <input type="checkbox" id="terms" required>
+        I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>
+      </label>
+      <div class="error" id="stage4-error"></div>
+    </div>
+
+    <div class="nav-btns">
+      <button type="button" id="prevBtn" class="hidden">Previous</button>
+      <button type="button" id="nextBtn">Next</button>
+      <button type="submit" id="submitBtn" class="hidden">Submit Application</button>
+    </div>
+  </form>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
