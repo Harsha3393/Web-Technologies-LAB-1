@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management System</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .form-section {
+            margin-top: 20px;
+        }
+        .message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Employee Management System</h1>
+
+    <h2>Employee List</h2>
+    <table id="employeeTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Salary</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div class="form-section">
+        <h2>Add New Employee</h2>
+        <form id="addForm">
+            <label>ID: <input type="text" id="addId" required></label><br>
+            <label>Name: <input type="text" id="addName" required></label><br>
+            <label>Department: <input type="text" id="addDept" required></label><br>
+            <label>Salary: <input type="number" id="addSalary" required></label><br>
+            <button type="button" onclick="addEmployee()">Add</button>
+        </form>
+        <div id="addMessage" class="message"></div>
+    </div>
+
+    <div class="form-section">
+        <h2>Update Employee</h2>
+        <form id="updateForm">
+            <label>ID: <input type="text" id="updateId" required></label><br>
+            <label>New Department: <input type="text" id="updateDept"></label><br>
+            <label>New Salary: <input type="number" id="updateSalary"></label><br>
+            <button type="button" onclick="updateEmployee()">Update</button>
+        </form>
+        <div id="updateMessage" class="message"></div>
+    </div>
+
+    <div class="form-section">
+        <h2>Delete Employee</h2>
+        <form id="deleteForm">
+            <label>ID: <input type="text" id="deleteId" required></label><br>
+            <button type="button" onclick="deleteEmployee()">Delete</button>
+        </form>
+        <div id="deleteMessage" class="message"></div>
+    </div>
+
+    <div class="form-section">
+        <button type="button" onclick="saveXml()">Download Updated XML</button>
+        <div id="saveMessage" class="message"></div>
+    </div>
+
+    <script>
+        let xmlDoc;
+
+        function loadEmployees() {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', 'employees.xml', true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200 && xhr.responseXML) {
+                        xmlDoc = xhr.responseXML;
+                        if (!xmlDoc.documentElement) {
+                            showMessage('addMessage', 'Error: Empty or malformed XML.', 'red');
+                            return;
+                        }
+                        displayEmployees();
+                    } else {
+                        showMessage('addMessage', 'Error loading XML: ' + xhr.statusText, 'red');
+                    }
+                }
+            };
+            xhr.onerror = function() {
+                showMessage('addMessage', 'Error: Failed to fetch XML.', 'red');
+            };
+            xhr.send();
+        }
+
+        function displayEmployees() {
+            const tableBody = document.querySelector('#employeeTable tbody');
+            tableBody.innerHTML = ''; // Clear table
+            const employees = xmlDoc.getElementsByTagName('employee');
+            if (employees.length === 0) {
+                showMessage('addMessage', 'No employees found.', 'orange');
+            }
+            for (let i = 0; i < employees.length; i++) {
+                const emp = employees[i];
+                const id = emp.getElementsByTagName('id')[0]?.textContent || '';
+                const name = emp.getElementsByTagName('name')[0]?.textContent || '';
+                const dept = emp.getElementsByTagName('department')[0]?.textContent || '';
+                const salary = emp.getElementsByTagName('salary')[0]?.textContent || '';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${id}</td>
+                    <td>${name}</td>
+                    <td>${dept}</td>
+                    <td>${salary}</td>
+                    <td>
+                        <button onclick="prepareUpdate('${id}', '${dept}', '${salary}')">Edit</button>
+                        <button onclick="document.getElementById('deleteId').value = '${id}'; deleteEmployee();">Delete</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+
+        function addEmployee() {
+            const id = document.getElementById('addId').value.trim();
+            const name = document.getElementById('addName').value.trim();
+            const dept = document.getElementById('addDept').value.trim();
+            const salary = document.getElementById('addSalary').value.trim();
+
+            if (!id || !name || !dept || !salary) {
+                showMessage('addMessage', 'Error: All fields are required.', 'red');
+                return;
+            }
+
+            if (findEmployeeById(id)) {
+                showMessage('addMessage', 'Error: Employee ID already exists.', 'red');
+                return;
+            }
+
+            const employee = xmlDoc.createElement('employee');
+            employee.appendChild(createElementWithText('id', id));
+            employee.appendChild(createElementWithText('name', name));
+            employee.appendChild(createElementWithText('department', dept));
+            employee.appendChild(createElementWithText('salary', salary));
+
+            xmlDoc.documentElement.appendChild(employee);
+            displayEmployees();
+            showMessage('addMessage', 'Success: Employee added.', 'green');
+            document.getElementById('addForm').reset();
+        }
+
+        function updateEmployee() {
+            const id = document.getElementById('updateId').value.trim();
+            const newDept = document.getElementById('updateDept').value.trim();
+            const newSalary = document.getElementById('updateSalary').value.trim();
+
+            if (!id || (!newDept && !newSalary)) {
+                showMessage('updateMessage', 'Error: ID and at least one field to update are required.', 'red');
+                return;
+            }
+
+            const emp = findEmployeeById(id);
+            if (!emp) {
+                showMessage('updateMessage', 'Error: Employee not found.', 'red');
+                return;
+            }
+
+            if (newDept) {
+                emp.getElementsByTagName('department')[0].textContent = newDept;
+            }
+            if (newSalary) {
+                emp.getElementsByTagName('salary')[0].textContent = newSalary;
+            }
+
+            displayEmployees();
+            showMessage('updateMessage', 'Success: Employee updated.', 'green');
+            document.getElementById('updateForm').reset();
+        }
+
+        function deleteEmployee() {
+            const id = document.getElementById('deleteId').value.trim();
+            if (!id) {
+                showMessage('deleteMessage', 'Error: ID is required.', 'red');
+                return;
+            }
+
+            const emp = findEmployeeById(id);
+            if (!emp) {
+                showMessage('deleteMessage', 'Error: Employee not found.', 'red');
+                return;
+            }
+
+            emp.parentNode.removeChild(emp);
+            displayEmployees();
+            showMessage('deleteMessage', 'Success: Employee deleted.', 'green');
+            document.getElementById('deleteForm').reset();
+        }
+
+        function findEmployeeById(id) {
+            const employees = xmlDoc.getElementsByTagName('employee');
+            for (let i = 0; i < employees.length; i++) {
+                if (employees[i].getElementsByTagName('id')[0]?.textContent === id) {
+                    return employees[i];
+                }
+            }
+            return null;
+        }
+
+        function createElementWithText(tag, text) {
+            const elem = xmlDoc.createElement(tag);
+            elem.textContent = text;
+            return elem;
+        }
+
+        function showMessage(elementId, message, color) {
+            const elem = document.getElementById(elementId);
+            elem.textContent = message;
+            elem.style.color = color;
+        }
+
+        function prepareUpdate(id, dept, salary) {
+            document.getElementById('updateId').value = id;
+            document.getElementById('updateDept').value = dept;
+            document.getElementById('updateSalary').value = salary;
+        }
+
+        function saveXml() {
+            const serializer = new XMLSerializer();
+            const xmlString = serializer.serializeToString(xmlDoc);
+            const blob = new Blob([xmlString], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'employees_updated.xml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showMessage('saveMessage', 'Success: Updated XML downloaded.', 'green');
+        }
+
+        loadEmployees();
+    </script>
+</body>
+</html>
