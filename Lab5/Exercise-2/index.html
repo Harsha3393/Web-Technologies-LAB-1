@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Book Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1100px; margin: 0 auto; padding: 20px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th { background-color: #f0f4f8; }
+        .available { color: green; font-weight: bold; }
+        .borrowed { color: darkred; font-weight: bold; }
+        .section { margin: 30px 0; padding: 15px; border: 1px solid #ddd; border-radius: 6px; }
+        .message { margin-top: 10px; font-weight: bold; min-height: 24px; }
+        .success { color: #2e7d32; }
+        .error   { color: #c62828; }
+        button { padding: 8px 16px; margin: 4px; cursor: pointer; }
+        input, select { padding: 6px; margin: 4px 0; width: 220px; }
+        label { display: inline-block; width: 140px; }
+    </style>
+</head>
+<body>
+
+<h1>Library Book Tracker</h1>
+
+<div class="section">
+    <h2>Current Books</h2>
+    <table id="booksTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="booksBody"></tbody>
+    </table>
+    <div id="listMessage" class="message"></div>
+</div>
+
+<div class="section">
+    <h2>Add New Book</h2>
+    <div>
+        <label>Book ID:</label>
+        <input type="text" id="addId" placeholder="e.g. B001" required>
+    </div>
+    <div>
+        <label>Title:</label>
+        <input type="text" id="addTitle" required>
+    </div>
+    <div>
+        <label>Author:</label>
+        <input type="text" id="addAuthor" required>
+    </div>
+    <div>
+        <label>Status:</label>
+        <select id="addStatus">
+            <option value="Available">Available</option>
+            <option value="Borrowed">Borrowed</option>
+        </select>
+    </div>
+    <button onclick="addBook()">Add Book</button>
+    <div id="addMessage" class="message"></div>
+</div>
+
+<div class="section">
+    <h2>Change Book Status / Delete</h2>
+    <div>
+        <label>Book ID:</label>
+        <input type="text" id="actionId" placeholder="e.g. B001" required>
+    </div>
+    <button onclick="toggleStatus()">Toggle Availability</button>
+    <button onclick="deleteBook()">Delete Book</button>
+    <div id="actionMessage" class="message"></div>
+</div>
+
+<div class="section">
+    <button onclick="downloadUpdatedXml()">Download Updated books.xml</button>
+    <div id="saveMessage" class="message"></div>
+</div>
+
+<script>
+
+let xmlDoc = null;
+
+function loadBooks() {
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", "books.xml", true);
+    
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200 && xhr.responseXML) {
+                xmlDoc = xhr.responseXML;
+                if (!xmlDoc.documentElement) {
+                    showMessage("listMessage", "Error: Empty or invalid XML file", "error");
+                    return;
+                }
+                renderBooks();
+            } else {
+                showMessage("listMessage", "Failed to load books.xml – check file exists and server is running", "error");
+            }
+        }
+    };
+    
+    xhr.onerror = () => showMessage("listMessage", "Network error loading XML", "error");
+    xhr.send();
+}
+
+function renderBooks() {
+    const tbody = document.getElementById("booksBody");
+    tbody.innerHTML = "";
+
+    const books = xmlDoc.getElementsByTagName("book");
+    if (books.length === 0) {
+        showMessage("listMessage", "No books found in the library.", "error");
+        return;
+    }
+
+    showMessage("listMessage", `Showing ${books.length} book(s)`, "success");
+
+    for (let book of books) {
+        const id       = book.getElementsByTagName("id")[0]?.textContent || "—";
+        const title    = book.getElementsByTagName("title")[0]?.textContent || "—";
+        const author   = book.getElementsByTagName("author")[0]?.textContent || "—";
+        const statusEl = book.getElementsByTagName("status")[0];
+        const status   = statusEl?.textContent || "Unknown";
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${id}</td>
+            <td>${title}</td>
+            <td>${author}</td>
+            <td class="${status === 'Available' ? 'available' : 'borrowed'}">${status}</td>
+            <td>
+                <button onclick="fillActionId('${id}')">Select</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    }
+}
+
+function addBook() {
+    const id     = document.getElementById("addId").value.trim();
+    const title  = document.getElementById("addTitle").value.trim();
+    const author = document.getElementById("addAuthor").value.trim();
+    const status = document.getElementById("addStatus").value;
+
+    if (!id || !title || !author) {
+        showMessage("addMessage", "All fields are required", "error");
+        return;
+    }
+
+    if (findBookById(id)) {
+        showMessage("addMessage", `Book with ID ${id} already exists`, "error");
+        return;
+    }
+
+    const newBook = xmlDoc.createElement("book");
+
+    newBook.appendChild(createField("id", id));
+    newBook.appendChild(createField("title", title));
+    newBook.appendChild(createField("author", author));
+    newBook.appendChild(createField("status", status));
+
+    xmlDoc.documentElement.appendChild(newBook);
+
+    renderBooks();
+    showMessage("addMessage", `Book "${title}" added successfully`, "success");
+    clearAddForm();
+}
+
+function toggleStatus() {
+    const id = document.getElementById("actionId").value.trim();
+    if (!id) {
+        showMessage("actionMessage", "Please enter Book ID", "error");
+        return;
+    }
+
+    const book = findBookById(id);
+    if (!book) {
+        showMessage("actionMessage", `Book with ID ${id} not found`, "error");
+        return;
+    }
+
+    const statusEl = book.getElementsByTagName("status")[0];
+    const current  = statusEl.textContent.trim();
+    const newStatus = current === "Available" ? "Borrowed" : "Available";
+
+    statusEl.textContent = newStatus;
+
+    renderBooks();
+    showMessage("actionMessage", `Status changed to <b>${newStatus}</b> for book ${id}`, "success");
+}
+
+function deleteBook() {
+    const id = document.getElementById("actionId").value.trim();
+    if (!id) {
+        showMessage("actionMessage", "Please enter Book ID", "error");
+        return;
+    }
+
+    const book = findBookById(id);
+    if (!book) {
+        showMessage("actionMessage", `Book with ID ${id} not found`, "error");
+        return;
+    }
+
+    if (!confirm(`Delete book "${book.getElementsByTagName("title")[0]?.textContent || id}"?`)) {
+        return;
+    }
+
+    book.parentNode.removeChild(book);
+
+    renderBooks();
+    showMessage("actionMessage", `Book ${id} deleted`, "success");
+    document.getElementById("actionId").value = "";
+}
+
+function findBookById(id) {
+    const books = xmlDoc.getElementsByTagName("book");
+    for (let book of books) {
+        if (book.getElementsByTagName("id")[0]?.textContent === id) {
+            return book;
+        }
+    }
+    return null;
+}
+
+function createField(tagName, value) {
+    const el = xmlDoc.createElement(tagName);
+    el.textContent = value;
+    return el;
+}
+
+function fillActionId(id) {
+    document.getElementById("actionId").value = id;
+}
+
+function clearAddForm() {
+    document.getElementById("addId").value = "";
+    document.getElementById("addTitle").value = "";
+    document.getElementById("addAuthor").value = "";
+    document.getElementById("addStatus").value = "Available";
+}
+
+function downloadUpdatedXml() {
+    if (!xmlDoc) {
+        showMessage("saveMessage", "No data to save", "error");
+        return;
+    }
+
+    const serializer = new XMLSerializer();
+    let xmlString = serializer.serializeToString(xmlDoc);
+
+    if (!xmlString.startsWith("<?xml")) {
+        xmlString = '<?xml version="1.0" encoding="UTF-8"?>\n' + xmlString;
+    }
+
+    const blob = new Blob([xmlString], { type: "application/xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "books_updated.xml";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showMessage("saveMessage", "Updated XML downloaded", "success");
+}
+
+function showMessage(id, text, type) {
+    const el = document.getElementById(id);
+    el.innerHTML = text;
+    el.className = "message " + type;
+}
+
+window.onload = loadBooks;
+</script>
+
+</body>
+</html>
