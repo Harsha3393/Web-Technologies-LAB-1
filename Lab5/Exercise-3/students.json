@@ -1,0 +1,22 @@
+{
+  "students": [
+    {
+      "id": "S001",
+      "name": "Aarav Sharma",
+      "course": "Computer Science",
+      "marks": 85
+    },
+    {
+      "id": "S002",
+      "name": "Priya Patel",
+      "course": "Electronics",
+      "marks": 92
+    },
+    {
+      "id": "S003",
+      "name": "Rahul Verma",
+      "course": "Mechanical",
+      "marks": 78
+    }
+  ]
+}
