@@ -1,0 +1,30 @@
+[
+  {
+    "id": "P001",
+    "name": "Wireless Mouse",
+    "category": "Electronics",
+    "price": 1249.50,
+    "stock": 18
+  },
+  {
+    "id": "P002",
+    "name": "T-shirt (M)",
+    "category": "Clothing",
+    "price": 499.00,
+    "stock": 4
+  },
+  {
+    "id": "P003",
+    "name": "Bluetooth Speaker",
+    "category": "Electronics",
+    "price": 3499.00,
+    "stock": 7
+  },
+  {
+    "id": "P004",
+    "name": "Notebook 500 pages",
+    "category": "Stationery",
+    "price": 180.00,
+    "stock": 45
+  }
+]
