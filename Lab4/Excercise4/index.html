@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+        }
+
+        .container {
+            width: 350px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        input {
+            width: 80%;
+            padding: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin-top: 10px;
+        }
+
+        .spinner {
+            display: none;
+            color: blue;
+            margin-top: 10px;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .weather {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Weather Dashboard</h2>
+
+    <input type="text" id="city" placeholder="Enter city name">
+    <br>
+    <button onclick="getWeather()">Get Weather</button>
+
+    <div class="spinner" id="spinner">Loading...</div>
+
+    <div id="message"></div>
+
+    <div class="weather" id="weather"></div>
+</div>
+
+<script>
+    const API_KEY = "2d41449ece891ea93cb85d0d8c73533c";
+    let cachedCity = "";
+    let cachedData = null;
+
+    function getWeather() {
+        const city = document.getElementById("city").value.trim();
+        const spinner = document.getElementById("spinner");
+        const message = document.getElementById("message");
+        const weatherDiv = document.getElementById("weather");
+
+        if (city === "") return;
+
+        message.textContent = "";
+        weatherDiv.innerHTML = "";
+
+        // Cache check
+        if (city === cachedCity && cachedData) {
+            displayWeather(cachedData);
+            return;
+        }
+
+        spinner.style.display = "block";
+
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`;
+
+        fetch(url)
+            .then(response => {
+                if (response.status === 404) {
+                    throw new Error("Invalid city name");
+                }
+                if (!response.ok) {
+                    throw new Error("Network error");
+                }
+                return response.json();
+            })
+            .then(data => {
+                cachedCity = city;
+                cachedData = data;
+                displayWeather(data);
+            })
+            .catch(error => {
+                message.textContent = error.message;
+                message.className = "error";
+            })
+            .finally(() => {
+                spinner.style.display = "none";
+            });
+    }
+
+    function displayWeather(data) {
+        const weatherDiv = document.getElementById("weather");
+
+        weatherDiv.innerHTML = `
+            <h3>${data.name}</h3>
+            <p>Temperature: ${data.main.temp} °C</p>
+            <p>Humidity: ${data.main.humidity}%</p>
+            <p>Condition: ${data.weather[0].description}</p>
+        `;
+    }
+</script>
+</body>
+</html>
